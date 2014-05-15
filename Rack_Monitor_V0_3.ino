@@ -8,7 +8,7 @@
 #include <Ethernet.h>          // Include the Ethernet library
 #include <SPI.h>
 #include <MemoryFree.h>
-#include <Agentuino_Trap.h> 
+#include <Agentuino.h> 
 #include <Flash.h>
 //
 #define DEBUG
