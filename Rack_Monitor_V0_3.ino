@@ -95,6 +95,7 @@ void pduReceived()
   api_status = Agentuino.requestPdu(&pduRequest);
   pduRequest.OID.toString(oid);
   
+  Serial.println("***********Start of new request***********");
   Serial.print("API Status is ");
   Serial.println(api_status);
   Serial.print("PDU type is ");
@@ -107,7 +108,7 @@ void pduReceived()
 //  Serial.println(pduRequest.OID);
   Serial.print("Formated OID is ");
   Serial.println(oid);
-  Serial.print("SNMP Value ");
+  //Serial.print("SNMP Value ");
   //Serial.println(pduRequest.VALUE);
   
   
@@ -118,17 +119,22 @@ void pduReceived()
   Serial.print("SNMP Version ");
   Serial.println(pduRequest.version);
   
-  if (pduRequest.type == SNMP_PDU_GET_NEXT){
+  Serial.println("***********Start of processing loop***********");
+  
+  /*if (pduRequest.type == SNMP_PDU_GET_NEXT || pduRequest.type == SNMP_PDU_GET_BULK){
     Serial.println("Get Next command");
+    Serial.println(SNMP_PDU_GET_BULK);
+    Serial.println(pduRequest.type);
     Agentuino.freePdu(&pduRequest);
     pduRequest.type = SNMP_PDU_RESPONSE;
-    pduRequest.error = SNMP_ERR_READ_ONLY;
+    pduRequest.error = SNMP_ERR_GEN_ERROR;
     Agentuino.responsePdu(&pduRequest);
     
-    Agentuino.responsePdu(&pduRequest);
+    //Agentuino.responsePdu(&pduRequest);
     
     return;
   }
+  */
   Serial.println("pdReived start");
 
   
@@ -304,7 +310,7 @@ void pduReceived()
         pduRequest.error = SNMP_ERR_READ_ONLY;
       } 
       else {
-        // response packet from get-request - valA0
+        // response packet from get-request - valD2
         status = pduRequest.VALUE.encode(SNMP_SYNTAX_INT32, digitalRead(2));
         pduRequest.type = SNMP_PDU_RESPONSE;
         pduRequest.error = status;
@@ -325,18 +331,22 @@ void pduReceived()
       pduRequest.error = SNMP_ERR_NO_SUCH_NAME;
     }
     Agentuino.responsePdu(&pduRequest);
+    Serial.println("***********End of processing loop - Success***********");
+    
   } 
   else {
+    Agentuino.freePdu(&pduRequest);
     pduRequest.type = SNMP_PDU_RESPONSE;
     pduRequest.error = SNMP_ERR_NO_SUCH_NAME;
-    Serial.print("in final else loop before sending response");
-    return;
-    //Agentuino.responsePdu(&pduRequest);
-  }
+    Serial.println("in final else loop before sending response");
+    Agentuino.responsePdu(&pduRequest);
+    Serial.println("***********End of processing loop - Failure***********");
+    //return;
+    }
   //
-  Agentuino.freePdu(&pduRequest);
+  //Agentuino.freePdu(&pduRequest);
   //
-  //Serial << "UDP Packet Received End.." << " RAM:" << freeMemory() << endl;
+  Serial << "UDP Packet Received End.." << " RAM:" << freeMemory() << endl;
 }
 
 void setup()
@@ -345,12 +355,14 @@ void setup()
   Ethernet.begin(mac, ip);
   //
   api_status = Agentuino.begin();
-  Serial.println("Starting up api status is ");
+  
+  Serial.print("Agentuino.begin, api status is ");
   Serial.println(api_status);
   //
   if ( api_status == SNMP_API_STAT_SUCCESS ) {
     //
     Agentuino.onPduReceive(pduReceived);
+    
     //
     delay(10);
     //
@@ -374,6 +386,8 @@ void loop()
   // sysUpTime - The time (in hundredths of a second) since
   // the network management portion of the system was last
   // re-initialized.
+  //Check for alert conditions
+  
   if ( millis() - prevMillis > 1000 ) {
     // increment previous milliseconds
     prevMillis += 1000;
