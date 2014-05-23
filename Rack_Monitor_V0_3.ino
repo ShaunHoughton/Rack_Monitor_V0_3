@@ -1,3 +1,4 @@
+
 /**
  * Agentuino SNMP Agent Library Prototyping...
  *
@@ -21,6 +22,12 @@ static byte gateway[] = {
   192, 168, 1, 1 };
 static byte subnet[] = { 
   255, 255, 255, 0 };
+
+
+const int DoorOpen = 1;
+const int DoorClosed = 0;
+
+int DoorState = 0;
 
 //Setup standard OID values
 //
@@ -89,61 +96,71 @@ SNMP_ERR_CODES status;
 
 void pduReceived()
 {
+  Serial.println("***********Start of new request***********");
+
   SNMP_PDU pduRequest;
   SNMP_PDU pduResponse;
-  
+
   api_status = Agentuino.requestPdu(&pduRequest);
-  pduRequest.OID.toString(oid);
-  
-  Serial.println("***********Start of new request***********");
+
   Serial.print("API Status is ");
   Serial.println(api_status);
+
+  if(api_status != SNMP_API_STAT_SUCCESS){
+    Agentuino.freePdu(&pduRequest);
+    Serial.println("API Status not successfull!");
+
+    return;
+  }
+
+  pduRequest.OID.toString(oid);
+
   Serial.print("PDU type is ");
   Serial.println(pduRequest.type);
   Serial.print("PDU error is ");
   Serial.println(pduRequest.error);
   Serial.print("PDU request ID is ");
   Serial.println(pduRequest.requestId);
-//  Serial.print("OID is ");
-//  Serial.println(pduRequest.OID);
+  //  Serial.print("OID is ");
+  //  Serial.println(pduRequest.OID);
   Serial.print("Formated OID is ");
   Serial.println(oid);
   //Serial.print("SNMP Value ");
   //Serial.println(pduRequest.VALUE);
-  
-  
-//  Serial.print("SNMP_PDU_GET = ");
-//  Serial.println(SNMP_PDU_GET);
-//  Serial.print("SNMP_PDU_GET_NEXT = ");
-//  Serial.println(SNMP_PDU_GET_NEXT);
+
+
+  //  Serial.print("SNMP_PDU_GET = ");
+  //  Serial.println(SNMP_PDU_GET);
+  //  Serial.print("SNMP_PDU_GET_NEXT = ");
+  //  Serial.println(SNMP_PDU_GET_NEXT);
   Serial.print("SNMP Version ");
   Serial.println(pduRequest.version);
-  
+
   Serial.println("***********Start of processing loop***********");
-  
+
   /*if (pduRequest.type == SNMP_PDU_GET_NEXT || pduRequest.type == SNMP_PDU_GET_BULK){
-    Serial.println("Get Next command");
-    Serial.println(SNMP_PDU_GET_BULK);
-    Serial.println(pduRequest.type);
-    Agentuino.freePdu(&pduRequest);
-    pduRequest.type = SNMP_PDU_RESPONSE;
-    pduRequest.error = SNMP_ERR_GEN_ERROR;
-    Agentuino.responsePdu(&pduRequest);
-    
-    //Agentuino.responsePdu(&pduRequest);
-    
-    return;
-  }
-  */
+   Serial.println("Get Next command");
+   Serial.println(SNMP_PDU_GET_BULK);
+   Serial.println(pduRequest.type);
+   Agentuino.freePdu(&pduRequest);
+   pduRequest.type = SNMP_PDU_RESPONSE;
+   pduRequest.error = SNMP_ERR_GEN_ERROR;
+   Agentuino.responsePdu(&pduRequest);
+   
+   //Agentuino.responsePdu(&pduRequest);
+   
+   return;
+   }
+   */
   Serial.println("pdReived start");
 
-  
+
   //
-  #ifdef DEBUG
+#ifdef DEBUG
   Serial << F("UDP Packet Received Start..") << F(" RAM:") << freeMemory() << endl;
-  #endif
-  
-  
+#endif
+
+
 
   if ( pduRequest.type == SNMP_PDU_GET || pduRequest.type == SNMP_PDU_SET
     && pduRequest.error == SNMP_ERR_NO_ERROR && api_status == SNMP_API_STAT_SUCCESS ) {
@@ -168,9 +185,9 @@ void pduReceived()
         pduRequest.error = status;
       }
       //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial << F("sysDescr...") << locDescr << F(" ") << pduRequest.VALUE.size << endl;
-      #endif
+#endif
     } 
     else if ( strcmp_P(oid, sysUpTime ) == 0 ) {
       // handle sysName (set/get) requests
@@ -186,9 +203,9 @@ void pduReceived()
         pduRequest.error = status;
       }
       //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial << F("sysUpTime...") << locUpTime << F(" ") << pduRequest.VALUE.size << endl;
-      #endif
+#endif
     } 
     else if ( strcmp_P(oid, sysName ) == 0 ) {
       // handle sysName (set/get) requests
@@ -205,9 +222,9 @@ void pduReceived()
         pduRequest.error = status;
       }
       //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial << F("sysName...") << locName << F(" ") << pduRequest.VALUE.size << endl;
-      #endif
+#endif
     } 
     else if ( strcmp_P(oid, sysContact ) == 0 ) {
       // handle sysContact (set/get) requests
@@ -224,9 +241,9 @@ void pduReceived()
         pduRequest.error = status;
       }
       //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial << F("sysContact...") << locContact << F(" ") << pduRequest.VALUE.size << endl;
-      #endif
+#endif
     } 
     else if ( strcmp_P(oid, sysLocation ) == 0 ) {
       // handle sysLocation (set/get) requests
@@ -243,9 +260,9 @@ void pduReceived()
         pduRequest.error = status;
       }
       //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial << F("sysLocation...") << locLocation << F(" ") << pduRequest.VALUE.size << endl;
-      #endif
+#endif
     } 
     else if ( strcmp_P(oid, sysServices) == 0 ) {
       // handle sysServices (set/get) requests
@@ -261,9 +278,9 @@ void pduReceived()
         pduRequest.error = status;
       }
       //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial << F("locServices...") << locServices << F(" ") << pduRequest.VALUE.size << endl;
-      #endif
+#endif
     }
     else if ( strcmp_P(oid, sysObjectID) == 0 ) {
       // handle sysObjectID (set/get) requests
@@ -279,9 +296,9 @@ void pduReceived()
         pduRequest.error = status;
       }
       //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial << F("locObjectIF...") << locObjectID << F(" ") << pduRequest.VALUE.size << endl;
-      #endif
+#endif
     } 
     else if ( strcmp_P(oid, valA0) == 0 ) {
       // handle valA0 (get) requests
@@ -297,9 +314,9 @@ void pduReceived()
         pduRequest.error = status;
       }
       //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial << F("valA0...") << locObjectID << F(" ") << pduRequest.VALUE.size << endl;
-      #endif
+#endif
     }
 
     else if ( strcmp_P(oid, valD2) == 0 ) {
@@ -316,9 +333,9 @@ void pduReceived()
         pduRequest.error = status;
       }
       //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial << F("valD2...") << locObjectID << F(" ") << pduRequest.VALUE.size << endl;
-      #endif
+#endif
     }
 
     //  End of processing code
@@ -332,7 +349,7 @@ void pduReceived()
     }
     Agentuino.responsePdu(&pduRequest);
     Serial.println("***********End of processing loop - Success***********");
-    
+
   } 
   else {
     Agentuino.freePdu(&pduRequest);
@@ -342,27 +359,73 @@ void pduReceived()
     Agentuino.responsePdu(&pduRequest);
     Serial.println("***********End of processing loop - Failure***********");
     //return;
-    }
+  }
   //
-  //Agentuino.freePdu(&pduRequest);
+  Agentuino.freePdu(&pduRequest);
   //
   Serial << "UDP Packet Received End.." << " RAM:" << freeMemory() << endl;
 }
+
+void add_trap_data(byte* p)
+{
+  byte i;
+  SNMP_OID var_name;
+  var_name.data[0] = 1;
+  var_name.data[1] = 2;
+  var_name.data[2] = 3;
+  var_name.data[3] = 4;
+  var_name.data[3] = 5;
+  var_name.data[3] = 6;
+  var_name.size = 4;
+  *(p++) = SNMP_SYNTAX_OID;
+  *(p++) = var_name.size;
+  for(i = 0; i < var_name.size; i++) *(p++) = var_name.data[i];
+  *(p++) = SNMP_SYNTAX_INT;
+  *(p++) = 2;
+  *(p++) = 0x42;
+  *(p++) = 0;
+}
+
+void send()
+{
+  SNMP_PDU pdu;
+  char agent[] = {
+    192, 168, 1,223  };
+  const uint8_t manager[] = {
+    192, 168, 1, 220  };
+  pdu.OID.size = 2;
+  pdu.OID.data[0] = 1;
+  pdu.OID.data[1] = 1;
+  pdu.address = agent;
+  pdu.trap_type = SNMP_TRAP_COLD_START;
+  pdu.specific_trap = 0;
+  pdu.time_ticks = 250;
+  /* the size of the data you will add at the end of the packet */
+  pdu.trap_data_size = 10;
+  /* the function that adds this data */
+  pdu.trap_data_adder = add_trap_data;
+  Agentuino.sendTrap(&pdu, manager);
+}
+
+
 
 void setup()
 {
   Serial.begin(115200);
   Ethernet.begin(mac, ip);
+
+  //Setup door switch
+  pinMode(2, INPUT_PULLUP);
   //
   api_status = Agentuino.begin();
-  
+
   Serial.print("Agentuino.begin, api status is ");
   Serial.println(api_status);
   //
   if ( api_status == SNMP_API_STAT_SUCCESS ) {
     //
     Agentuino.onPduReceive(pduReceived);
-    
+
     //
     delay(10);
     //
@@ -376,6 +439,8 @@ void setup()
   Serial << F("SNMP Agent Initalization Problem...") << status << endl;
 }
 
+
+
 void loop()
 {
   // listen/handle for incoming SNMP requests
@@ -387,7 +452,24 @@ void loop()
   // the network management portion of the system was last
   // re-initialized.
   //Check for alert conditions
+  int TmpDoorState = digitalRead(2);
   
+  if(TmpDoorState != DoorState){
+
+    if(TmpDoorState == DoorOpen){
+      Serial.println("Door open");
+      DoorState = TmpDoorState;
+      send();
+      delay(5000);
+    }
+    else{
+      Serial.println("Door closed");
+      DoorState = TmpDoorState;
+      send();
+      delay(5000);
+    }
+  }  
+
   if ( millis() - prevMillis > 1000 ) {
     // increment previous milliseconds
     prevMillis += 1000;
@@ -396,4 +478,6 @@ void loop()
     locUpTime += 100;
   }
 }
+
+
 
