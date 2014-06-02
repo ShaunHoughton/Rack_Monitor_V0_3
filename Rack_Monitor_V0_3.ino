@@ -374,9 +374,9 @@ void add_trap_data(byte* p)
   var_name.data[1] = 2;
   var_name.data[2] = 3;
   var_name.data[3] = 4;
-  var_name.data[3] = 5;
-  var_name.data[3] = 6;
-  var_name.size = 4;
+  var_name.data[4] = 5;
+  var_name.data[5] = 6;
+  var_name.size = 6;
   *(p++) = SNMP_SYNTAX_OID;
   *(p++) = var_name.size;
   for(i = 0; i < var_name.size; i++) *(p++) = var_name.data[i];
@@ -386,18 +386,23 @@ void add_trap_data(byte* p)
   *(p++) = 0;
 }
 
-void send()
+void sendTrap(SNMP_TRAP_TYPES TrapOut)
 {
   SNMP_PDU pdu;
   char agent[] = {
-    192, 168, 1,223  };
+    192, 168, 1,220};
   const uint8_t manager[] = {
-    192, 168, 1, 220  };
-  pdu.OID.size = 2;
+    192, 168, 1, 220};
+  pdu.OID.size = 7;
   pdu.OID.data[0] = 1;
-  pdu.OID.data[1] = 1;
+  pdu.OID.data[1] = 3;
+  pdu.OID.data[2] = 6;
+  pdu.OID.data[3] = 1;
+  pdu.OID.data[4] = 4;
+  pdu.OID.data[5] = 1;
+  pdu.OID.data[6] = 1;
   pdu.address = agent;
-  pdu.trap_type = SNMP_TRAP_COLD_START;
+  pdu.trap_type = TrapOut;
   pdu.specific_trap = 0;
   pdu.time_ticks = 250;
   /* the size of the data you will add at the end of the packet */
@@ -431,6 +436,7 @@ void setup()
     //
     Serial << F("SNMP Agent Initalized...") << endl;
     //
+    sendTrap(SNMP_TRAP_COLD_START);
     return;
   }
   //
@@ -459,13 +465,13 @@ void loop()
     if(TmpDoorState == DoorOpen){
       Serial.println("Door open");
       DoorState = TmpDoorState;
-      send();
+      sendTrap(SNMP_TRAP_LINK_UP);
       delay(5000);
     }
     else{
       Serial.println("Door closed");
       DoorState = TmpDoorState;
-      send();
+      sendTrap(SNMP_TRAP_LINK_DOWN);
       delay(5000);
     }
   }  
