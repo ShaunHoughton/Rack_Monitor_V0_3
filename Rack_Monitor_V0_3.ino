@@ -369,6 +369,11 @@ void pduReceived()
 void add_trap_data(byte* p)
 {
   byte i;
+  SNMP_VALUE DoorOpenValue;
+  uint32_t DoorOpenTime = 95000;
+  DoorOpenValue.encode(SNMP_SYNTAX_TIME_TICKS, DoorOpenTime);
+  
+  
   SNMP_OID var_name;
   var_name.data[0] = 1;
   var_name.data[1] = 2;
@@ -380,33 +385,46 @@ void add_trap_data(byte* p)
   *(p++) = SNMP_SYNTAX_OID;
   *(p++) = var_name.size;
   for(i = 0; i < var_name.size; i++) *(p++) = var_name.data[i];
-  *(p++) = SNMP_SYNTAX_INT;
-  *(p++) = 2;
-  *(p++) = 0x42;
-  *(p++) = 0;
+  *(p++) = SNMP_SYNTAX_TIME_TICKS;
+  
+  *(p++) = 4; 
+  *(p++) = DoorOpenValue.data[0];
+  *(p++) = DoorOpenValue.data[1];
+  *(p++) = DoorOpenValue.data[2];
+  *(p++) = DoorOpenValue.data[3];
+  
+ 
+//  *(p++) = 0x00;
+//  *(p++) = 0x0E;
+//  *(p++) = 0x1F;
+//  *(p++) = 0x3C;
+  
 }
 
 void sendTrap(SNMP_TRAP_TYPES TrapOut)
 {
   SNMP_PDU pdu;
   char agent[] = {
-    192, 168, 1,220};
+    192, 168, 1,223};
   const uint8_t manager[] = {
     192, 168, 1, 220};
-  pdu.OID.size = 7;
+  pdu.OID.size = 9;
   pdu.OID.data[0] = 1;
   pdu.OID.data[1] = 3;
   pdu.OID.data[2] = 6;
   pdu.OID.data[3] = 1;
-  pdu.OID.data[4] = 4;
+  pdu.OID.data[4] = 2;
   pdu.OID.data[5] = 1;
-  pdu.OID.data[6] = 1;
+  pdu.OID.data[6] = 2;
+  pdu.OID.data[7] = 1;
+  pdu.OID.data[8] = 0;
+  
   pdu.address = agent;
   pdu.trap_type = TrapOut;
-  pdu.specific_trap = 0;
-  pdu.time_ticks = 250;
+  pdu.specific_trap = 3;
+  pdu.time_ticks = locUpTime;
   /* the size of the data you will add at the end of the packet */
-  pdu.trap_data_size = 10;
+  pdu.trap_data_size = 12;
   /* the function that adds this data */
   pdu.trap_data_adder = add_trap_data;
   Agentuino.sendTrap(&pdu, manager);
